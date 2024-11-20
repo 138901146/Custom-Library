@@ -12,7 +12,7 @@ public:
 	SegmentTree();
 	~SegmentTree();
 
-	bool initialize(int type,long long *array);
+	bool initialize(int type,int size,long long *array);
 	long long get(int left,int right);
 	bool update(int index,long long value);
 	int getType();

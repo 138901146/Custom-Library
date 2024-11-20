@@ -16,7 +16,7 @@ SegmentTree::~SegmentTree()
 	tree = nullptr;
 }
 
-bool SegmentTree::initialize(int type,long long *array)
+bool SegmentTree::initialize(int type,int size,long long *array)
 {
 	if(isInvalidType(type))
 	{
@@ -25,7 +25,7 @@ bool SegmentTree::initialize(int type,long long *array)
 
 	this->type = type;
 	leftmost = 0;
-	rightmost = sizeof(array);
+	rightmost = size;
 
 	treeSize = 0;
 	while((1 << treeSize) < rightmost)
