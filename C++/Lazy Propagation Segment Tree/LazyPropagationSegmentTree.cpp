@@ -62,7 +62,7 @@ bool LazyPropagationSegmentTree::initialize(int type,int size,long long *array)
 			initializeXor(array,1,leftmost,rightmost);
 			break;
 		default:
-			break;
+			return false;
 	}
 
 	return true;
