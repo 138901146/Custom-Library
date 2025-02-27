@@ -398,8 +398,8 @@ void LazyPropagationSegmentTree::updateAnd(int node,int start,int end,int left,i
 
 		if(start != end)
 		{
-			lazy[node << 1] = diff;
-			lazy[(node << 1) | 1] = diff;
+			lazy[node << 1] &= diff;
+			lazy[(node << 1) | 1] &= diff;
 		}
 
 		return;
