@@ -197,17 +197,15 @@ void LazyPropagationSegmentTree::initializeSum(long long *array,int node,int sta
 void LazyPropagationSegmentTree::initializeAnd(long long *array,int node,int start,int end)
 {
 	if(start == end)
-	{
 		tree[node] = array[start];
-		lazy[node] = 9223372036854775807;
-	}
 	else
 	{
 		initializeAnd(array,node << 1,start,(start + end) >> 1);
 		initializeAnd(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
 		tree[node] = tree[node << 1] & tree[(node << 1) | 1];
-		lazy[node] = 9223372036854775807;
 	}
+
+	lazy[node] = 9223372036854775807;
 }
 
 void LazyPropagationSegmentTree::initializeOr(long long *array,int node,int start,int end)
