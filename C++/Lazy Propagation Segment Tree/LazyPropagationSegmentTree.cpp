@@ -52,6 +52,17 @@ bool LazyPropagationSegmentTree::initialize(int type,int size,long long *array)
 		case SUM:
 			initializeSum(array,1,leftmost,rightmost);
 			break;
+		case AND:
+			initializeAnd(array,1,leftmost,rightmost);
+			break;
+		case OR:
+			initializeOr(array,1,leftmost,rightmost);
+			break;
+		case XOR:
+			initializeXor(array,1,leftmost,rightmost);
+			break;
+		default:
+			return false;
 	}
 
 	return true;
@@ -76,6 +87,15 @@ long long LazyPropagationSegmentTree::get(int left,int right)
 			break;
 		case SUM:
 			value = getSum(1,leftmost,rightmost,left,right);
+			break;
+		case AND:
+			value = getAnd(1,leftmost,rightmost,left,right);
+			break;
+		case OR:
+			value = getOr(1,leftmost,rightmost,left,right);
+			break;
+		case XOR:
+			value = getXor(1,leftmost,rightmost,left,right);
 			break;
 		default:
 			return -1;	// TODO: 만약 결과값이 진짜 -1인 경우 문제 발생 -> 추후 학습 후 ERROR CODE 생성 또는 throw 등으로 변경 요망.
@@ -102,6 +122,15 @@ bool LazyPropagationSegmentTree::update(int left,int right,long long diff)
 		case SUM:
 			updateSum(1,leftmost,rightmost,left,right,diff);
 			break;
+		case AND:
+			updateAnd(1,leftmost,rightmost,left,right,diff);
+			break;
+		case OR:
+			updateOr(1,leftmost,rightmost,left,right,diff);
+			break;
+		case XOR:
+			updateXor(1,leftmost,rightmost,left,right,diff);
+			break;
 		default:
 			return false;
 	}
@@ -126,7 +155,7 @@ bool LazyPropagationSegmentTree::isInvalidIndex(int index)
 
 bool LazyPropagationSegmentTree::isInvalidType(int type)
 {
-	return type < 1 || 3 < type;
+	return type < 1 || 6 < type;
 }
 
 void LazyPropagationSegmentTree::initializeMin(long long *array,int node,int start,int end)
@@ -162,6 +191,44 @@ void LazyPropagationSegmentTree::initializeSum(long long *array,int node,int sta
 		initializeSum(array,node << 1,start,(start + end) >> 1);
 		initializeSum(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
 		tree[node] = tree[node << 1] + tree[(node << 1) | 1];
+	}
+}
+
+void LazyPropagationSegmentTree::initializeAnd(long long *array,int node,int start,int end)
+{
+	if(start == end)
+		tree[node] = array[start];
+	else
+	{
+		initializeAnd(array,node << 1,start,(start + end) >> 1);
+		initializeAnd(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
+		tree[node] = tree[node << 1] & tree[(node << 1) | 1];
+	}
+
+	lazy[node] = 9223372036854775807;
+}
+
+void LazyPropagationSegmentTree::initializeOr(long long *array,int node,int start,int end)
+{
+	if(start == end)
+		tree[node] = array[start];
+	else
+	{
+		initializeOr(array,node << 1,start,(start + end) >> 1);
+		initializeOr(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
+		tree[node] = tree[node << 1] | tree[(node << 1) | 1];
+	}
+}
+
+void LazyPropagationSegmentTree::initializeXor(long long *array,int node,int start,int end)
+{
+	if(start == end)
+		tree[node] = array[start];
+	else
+	{
+		initializeXor(array,node << 1,start,(start + end) >> 1);
+		initializeXor(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
+		tree[node] = tree[node << 1] ^ tree[(node << 1) | 1];
 	}
 }
 
@@ -207,6 +274,42 @@ long long LazyPropagationSegmentTree::getSum(int node,int start,int end,int left
 		return tree[node];
 	else
 		return getSum(node << 1,start,(start + end) >> 1,left,right) + getSum((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
+}
+
+long long LazyPropagationSegmentTree::getAnd(int node,int start,int end,int left,int right)
+{
+	updateAndLazy(node,start,end);
+
+	if(left > end || right < start)
+		return 9223372036854775807;
+	else if(left <= start && end <= right)
+		return tree[node];
+	else
+		return getAnd(node << 1,start,(start + end) >> 1,left,right) & getAnd((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
+}
+
+long long LazyPropagationSegmentTree::getOr(int node,int start,int end,int left,int right)
+{
+	updateOrLazy(node,start,end);
+
+	if(left > end || right < start)
+		return 0;
+	else if(left <= start && end <= right)
+		return tree[node];
+	else
+		return getOr(node << 1,start,(start + end) >> 1,left,right) | getOr((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
+}
+
+long long LazyPropagationSegmentTree::getXor(int node,int start,int end,int left,int right)
+{
+	updateXorLazy(node,start,end);
+
+	if(left > end || right < start)
+		return 0;
+	else if(left <= start && end <= right)
+		return tree[node];
+	else
+		return getXor(node << 1,start,(start + end) >> 1,left,right) ^ getXor((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
 }
 
 void LazyPropagationSegmentTree::updateMin(int node,int start,int end,int left,int right,long long diff)
@@ -281,6 +384,78 @@ void LazyPropagationSegmentTree::updateSum(int node,int start,int end,int left,i
 	tree[node] = tree[node << 1] + tree[(node << 1) | 1];
 }
 
+void LazyPropagationSegmentTree::updateAnd(int node,int start,int end,int left,int right,long long diff)
+{
+	updateAndLazy(node,start,end);
+
+	if(right < start || end < left)
+		return;
+	if(left <= start && end <= right)
+	{
+		tree[node] &= diff;
+
+		if(start != end)
+		{
+			lazy[node << 1] &= diff;
+			lazy[(node << 1) | 1] &= diff;
+		}
+
+		return;
+	}
+
+	updateAnd(node << 1,start,(start + end) >> 1,left,right,diff);
+	updateAnd((node << 1) | 1,((start + end) >> 1) + 1,end,left,right,diff);
+	tree[node] = tree[node << 1] & tree[(node << 1) | 1];
+}
+
+void LazyPropagationSegmentTree::updateOr(int node,int start,int end,int left,int right,long long diff)
+{
+	updateOrLazy(node,start,end);
+
+	if(right < start || end < left)
+		return;
+	if(left <= start && end <= right)
+	{
+		tree[node] |= diff;
+
+		if(start != end)
+		{
+			lazy[node << 1] |= diff;
+			lazy[(node << 1) | 1] |= diff;
+		}
+
+		return;
+	}
+
+	updateOr(node << 1,start,(start + end) >> 1,left,right,diff);
+	updateOr((node << 1) | 1,((start + end) >> 1) + 1,end,left,right,diff);
+	tree[node] = tree[node << 1] | tree[(node << 1) | 1];
+}
+
+void LazyPropagationSegmentTree::updateXor(int node,int start,int end,int left,int right,long long diff)
+{
+	updateXorLazy(node,start,end);
+
+	if(right < start || end < left)
+		return;
+	if(left <= start && end <= right)
+	{
+		tree[node] ^= diff;
+
+		if(start != end)
+		{
+			lazy[node << 1] ^= diff;
+			lazy[(node << 1) | 1] ^= diff;
+		}
+
+		return;
+	}
+
+	updateXor(node << 1,start,(start + end) >> 1,left,right,diff);
+	updateXor((node << 1) | 1,((start + end) >> 1) + 1,end,left,right,diff);
+	tree[node] = tree[node << 1] ^ tree[(node << 1) | 1];
+}
+
 void LazyPropagationSegmentTree::updateMinLazy(int node,int start,int end)
 {
 	if(lazy[node] != 0)
@@ -318,6 +493,48 @@ void LazyPropagationSegmentTree::updateSumLazy(int node,int start,int end)
 		{
 			lazy[node << 1] += lazy[node];
 			lazy[(node << 1) | 1] += lazy[node];
+		}
+		lazy[node] = 0;
+	}
+}
+
+void LazyPropagationSegmentTree::updateAndLazy(int node,int start,int end)
+{
+	if(lazy[node] != 9223372036854775807)
+	{
+		tree[node] &= lazy[node];
+		if(start != end)
+		{
+			lazy[node << 1] &= lazy[node];
+			lazy[(node << 1) | 1] &= lazy[node];
+		}
+		lazy[node] = 9223372036854775807;
+	}
+}
+
+void LazyPropagationSegmentTree::updateOrLazy(int node,int start,int end)
+{
+	if(lazy[node] != 0)
+	{
+		tree[node] |= lazy[node];
+		if(start != end)
+		{
+			lazy[node << 1] |= lazy[node];
+			lazy[(node << 1) | 1] |= lazy[node];
+		}
+		lazy[node] = 0;
+	}
+}
+
+void LazyPropagationSegmentTree::updateXorLazy(int node,int start,int end)
+{
+	if(lazy[node] != 0)
+	{
+		tree[node] ^= lazy[node];
+		if(start != end)
+		{
+			lazy[node << 1] ^= lazy[node];
+			lazy[(node << 1) | 1] ^= lazy[node];
 		}
 		lazy[node] = 0;
 	}

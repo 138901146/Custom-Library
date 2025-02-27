@@ -47,6 +47,17 @@ bool SegmentTree::initialize(int type,int size,long long *array)
 		case SUM:
 			initializeSum(array,1,leftmost,rightmost);
 			break;
+		case AND:
+			initializeAnd(array,1,leftmost,rightmost);
+			break;
+		case OR:
+			initializeOr(array,1,leftmost,rightmost);
+			break;
+		case XOR:
+			initializeXor(array,1,leftmost,rightmost);
+			break;
+		default:
+			return false;
 	}
 
 	return true;
@@ -71,6 +82,15 @@ long long SegmentTree::get(int left,int right)
 			break;
 		case SUM:
 			value = getSum(1,leftmost,rightmost,left,right);
+			break;
+		case AND:
+			value = getAnd(1,leftmost,rightmost,left,right);
+			break;
+		case OR:
+			value = getOr(1,leftmost,rightmost,left,right);
+			break;
+		case XOR:
+			value = getXor(1,leftmost,rightmost,left,right);
 			break;
 		default:
 			return -1;	// TODO: 만약 결과값이 진짜 -1인 경우 문제 발생 -> 추후 학습 후 ERROR CODE 생성 또는 throw 등으로 변경 요망.
@@ -97,6 +117,15 @@ bool SegmentTree::update(int index,long long value)
 		case SUM:
 			updateSum(1,leftmost,rightmost,index,value);
 			break;
+		case AND:
+			updateAnd(1,leftmost,rightmost,index,value);
+			break;
+		case OR:
+			updateOr(1,leftmost,rightmost,index,value);
+			break;
+		case XOR:
+			updateXor(1,leftmost,rightmost,index,value);
+			break;
 		default:
 			return false;
 	}
@@ -121,7 +150,7 @@ bool SegmentTree::isInvalidIndex(int index)
 
 bool SegmentTree::isInvalidType(int type)
 {
-	return type < 1 || 3 < type;
+	return type < 1 || 6 < type;
 }
 
 void SegmentTree::initializeMin(long long *array,int node,int start,int end)
@@ -157,6 +186,42 @@ void SegmentTree::initializeSum(long long *array,int node,int start,int end)
 		initializeSum(array,node << 1,start,(start + end) >> 1);
 		initializeSum(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
 		tree[node] = tree[node << 1] + tree[(node << 1) | 1];
+	}
+}
+
+void SegmentTree::initializeAnd(long long *array,int node,int start,int end)
+{
+	if(start == end)
+		tree[node] = array[start];
+	else
+	{
+		initializeAnd(array,node << 1,start,(start + end) >> 1);
+		initializeAnd(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
+		tree[node] = tree[node << 1] & tree[(node << 1) | 1];
+	}
+}
+
+void SegmentTree::initializeOr(long long *array,int node,int start,int end)
+{
+	if(start == end)
+		tree[node] = array[start];
+	else
+	{
+		initializeOr(array,node << 1,start,(start + end) >> 1);
+		initializeOr(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
+		tree[node] = tree[node << 1] | tree[(node << 1) | 1];
+	}
+}
+
+void SegmentTree::initializeXor(long long *array,int node,int start,int end)
+{
+	if(start == end)
+		tree[node] = array[start];
+	else
+	{
+		initializeXor(array,node << 1,start,(start + end) >> 1);
+		initializeXor(array,(node << 1) | 1,((start + end) >> 1) + 1,end);
+		tree[node] = tree[node << 1] ^ tree[(node << 1) | 1];
 	}
 }
 
@@ -196,6 +261,36 @@ long long SegmentTree::getSum(int node,int start,int end,int left,int right)
 		return tree[node];
 	else
 		return getSum(node << 1,start,(start + end) >> 1,left,right) + getSum((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
+}
+
+long long SegmentTree::getAnd(int node,int start,int end,int left,int right)
+{
+	if(left > end || right < start)
+		return (long long)9223372036854775807;
+	else if(left <= start && end <= right)
+		return tree[node];
+	else
+		return getAnd(node << 1,start,(start + end) >> 1,left,right) & getAnd((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
+}
+
+long long SegmentTree::getOr(int node,int start,int end,int left,int right)
+{
+	if(left > end || right < start)
+		return 0;
+	else if(left <= start && end <= right)
+		return tree[node];
+	else
+		return getOr(node << 1,start,(start + end) >> 1,left,right) | getOr((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
+}
+
+long long SegmentTree::getXor(int node,int start,int end,int left,int right)
+{
+	if(left > end || right < start)
+		return 0;
+	else if(left <= start && end <= right)
+		return tree[node];
+	else
+		return getXor(node << 1,start,(start + end) >> 1,left,right) ^ getXor((node << 1) | 1,((start + end) >> 1) + 1,end,left,right);
 }
 
 void SegmentTree::updateMin(int node,int start,int end,int index,long long value)
@@ -246,5 +341,56 @@ void SegmentTree::updateSum(int node,int start,int end,int index,long long value
 		updateSum(node << 1,start,(start + end) >> 1,index,value);
 		updateSum((node << 1) | 1,((start + end) >> 1) + 1,end,index,value);
 		tree[node] = tree[node << 1] + tree[(node << 1) | 1];
+	}
+}
+
+void SegmentTree::updateAnd(int node,int start,int end,int index,long long value)
+{
+	if(index < start || end < index)
+		return;
+	else if(start == end)
+	{
+		tree[node] = value;
+		return;
+	}
+	else
+	{
+		updateAnd(node << 1,start,(start + end) >> 1,index,value);
+		updateAnd((node << 1) | 1,((start + end) >> 1) + 1,end,index,value);
+		tree[node] = tree[node << 1] & tree[(node << 1) | 1];
+	}
+}
+
+void SegmentTree::updateOr(int node,int start,int end,int index,long long value)
+{
+	if(index < start || end < index)
+		return;
+	else if(start == end)
+	{
+		tree[node] = value;
+		return;
+	}
+	else
+	{
+		updateOr(node << 1,start,(start + end) >> 1,index,value);
+		updateOr((node << 1) | 1,((start + end) >> 1) + 1,end,index,value);
+		tree[node] = tree[node << 1] | tree[(node << 1) | 1];
+	}
+}
+
+void SegmentTree::updateXor(int node,int start,int end,int index,long long value)
+{
+	if(index < start || end < index)
+		return;
+	else if(start == end)
+	{
+		tree[node] = value;
+		return;
+	}
+	else
+	{
+		updateXor(node << 1,start,(start + end) >> 1,index,value);
+		updateXor((node << 1) | 1,((start + end) >> 1) + 1,end,index,value);
+		tree[node] = tree[node << 1] ^ tree[(node << 1) | 1];
 	}
 }
